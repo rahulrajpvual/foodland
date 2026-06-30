@@ -399,9 +399,9 @@ function buildReport() {
   lines.push(`*BOC:* ${fmt(el.boc.value)}`);
   lines.push(`*Cash Out:* ${fmt(el.cashOut.value)}`);
 
-  // Cash With entries — each as *Name:* amount
+  // Cash With entries — each as *Cash with Name:* amount
   collectCwEntries().forEach(e => {
-    if (e.name) lines.push(`*${e.name}:* ${fmt(e.amount)}`);
+    if (e.name) lines.push(`*Cash with ${e.name}:* ${fmt(e.amount)}`);
   });
 
   lines.push(`*PayPoint:* ${fmt(el.paypoint.value)}`);
