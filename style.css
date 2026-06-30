@@ -147,9 +147,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 input[type="date"]:hover::-webkit-calendar-picker-indicator { opacity: 1; }
 
-.inp-n::-webkit-inner-spin-button,
-.inp-n::-webkit-outer-spin-button { -webkit-appearance: none; }
-.inp-n { -moz-appearance: textfield; }
+/* Remove number input spinners (arrows) — all browsers */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
 
 /* Prefix wrapper */
 .inp-wrap { position: relative; display: flex; align-items: center; }
