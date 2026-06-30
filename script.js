@@ -552,6 +552,21 @@ function init() {
     }
   });
 
+  // Block arrow keys (↑↓) from changing number input values
+  document.addEventListener('keydown', (e) => {
+    if ((e.key === 'ArrowUp' || e.key === 'ArrowDown') &&
+        e.target.tagName === 'INPUT' && e.target.type === 'number') {
+      e.preventDefault();
+    }
+  });
+
+  // Block mouse wheel from changing number input values
+  document.addEventListener('wheel', (e) => {
+    if (document.activeElement?.type === 'number') {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
   // Enter key navigation
   el.form.addEventListener('keydown', onEnter);
 
