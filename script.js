@@ -61,11 +61,11 @@ const todayISO = () => {
 
 const pad = (n) => String(n).padStart(2, '0');
 
-/** YYYY-MM-DD → DD/MM/YY */
+/** YYYY-MM-DD → DD/MM/YYYY (full year) */
 const fmtDate = (s) => {
   if (!s) return '';
   const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y.slice(2)}`;
+  return `${d}/${m}/${y}`;
 };
 
 /** Format number: strip trailing zeros; empty/NaN → '0' */
@@ -374,61 +374,56 @@ function validate() {
  *  - Invoice only if filled in
  */
 function buildReport() {
-  const sign = getVarSign();
+  const sign    = getVarSign();
+  const varRaw  = el.variance.value;
+  const varNum  = parseFloat(varRaw);
+  // Apply sign only when non-zero
+  const varFmt  = (varRaw === '' || varNum === 0)
+    ? '0'
+    : `${sign}${fmt(varRaw)}`;
+
   const lines = [];
 
-  if (el.shop.value) lines.push(`*${el.shop.value}*`);
-  lines.push(`*Date: ${fmtDate(el.date.value)}*`);
+  // Header
+  lines.push(`*Shop:* ${el.shop.value}`);
+  lines.push(`*Date:* ${fmtDate(el.date.value)}`);
   lines.push('');
 
-  lines.push(`*Opening balance*: ${fmt(el.opening.value)}`);
-  lines.push('');
+  // Core fields — exact order from spec
+  lines.push(`*Opening Balance:* ${fmt(el.opening.value)}`);
+  lines.push(`*Cash Sale:* ${fmt(el.cashSale.value)}`);
+  lines.push(`*Card Sale:* ${fmt(el.cardSale.value)}`);
+  lines.push(`*Bank Transfer:* ${fmt(el.bankTx.value)}`);
+  lines.push(`*Total Sale:* ${fmt(el.totalSale.value)}`);
+  lines.push(`*Variance:* ${varFmt}`);
+  lines.push(`*BOC:* ${fmt(el.boc.value)}`);
+  lines.push(`*Cash Out:* ${fmt(el.cashOut.value)}`);
 
-  lines.push(`*Cash sale*: ${fmt(el.cashSale.value)}`);
-  lines.push(`*Card sale*: ${fmt(el.cardSale.value)}`);
-  lines.push(`*Bank transfer*: ${fmt(el.bankTx.value)}`);
-  lines.push('');
+  // Cash With entries — each as *Name:* amount
+  collectCwEntries().forEach(e => {
+    if (e.name) lines.push(`*${e.name}:* ${fmt(e.amount)}`);
+  });
 
-  lines.push(`*Total sale*: ${fmt(el.totalSale.value)}`);
-  lines.push('');
+  lines.push(`*PayPoint:* ${fmt(el.paypoint.value)}`);
 
-  lines.push(`*Variance*: ${sign}${fmt(el.variance.value)}`);
-  lines.push('');
-
-  lines.push(`*BOC*: ${fmt(el.boc.value)}`);
-  lines.push('');
-
-  lines.push(`*Cash Out*: ${fmt(el.cashOut.value)}`);
-  lines.push('');
-
-  // Cash With entries
-  const cwEntries = collectCwEntries();
-  cwEntries.forEach(e => lines.push(`Cash with ${e.name}: ${fmt(e.amount)}`));
-  if (cwEntries.length > 0) lines.push('');
-
-  lines.push(`Paypoint: ${fmt(el.paypoint.value)}`);
-  lines.push('');
-
-  lines.push(`Dojo: ${fmt(el.dojo.value)}`);
-  lines.push('');
-
-  lines.push(`Closing cash: ${fmt(el.closing.value)}`);
-  lines.push('');
-
-  lines.push(`Unaccounted cash: ${fmt(el.unaccounted.value)}`);
-
-  // Extras
-  const extras = collectExtras();
-  if (extras.length > 0) {
-    lines.push('');
-    extras.forEach(e => lines.push(`${e.label}: ${fmt(e.amount)}`));
+  // Dojo — only if filled
+  if (el.dojo.value !== '' && parseFloat(el.dojo.value) !== 0) {
+    lines.push(`*Dojo:* ${fmt(el.dojo.value)}`);
   }
 
-  // Invoice (only if filled)
+  lines.push(`*Closing Cash:* ${fmt(el.closing.value)}`);
+  lines.push(`*Unaccounted Cash:* ${fmt(el.unaccounted.value)}`);
+
+  // Extras — *Label:* amount
+  collectExtras().forEach(e => {
+    if (e.label) lines.push(`*${e.label}:* ${fmt(e.amount)}`);
+  });
+
+  // Invoice — only if filled, with blank line before
   const inv = el.invoice.value.trim();
   if (inv && parseFloat(inv) !== 0) {
     lines.push('');
-    lines.push(`Invoice: ₹${fmt(inv)}`);
+    lines.push(`*Invoice:* ₹${fmt(inv)}`);
   }
 
   return lines.join('\n');
